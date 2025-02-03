@@ -25,7 +25,7 @@ To run the analysis locally, follow these steps:
    ```
 4. Run the analysis scripts:
    ```r
-   source("scripts/data_analysis.R")
+   Bellabeat_Data_Analysis_Study.Rmd
    ```
 
 ## Key Findings
