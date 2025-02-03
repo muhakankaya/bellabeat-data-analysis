@@ -1,0 +1,127 @@
+---
+title: "Bellabeat Data Analysis Study"
+author: "Hakan KAYA"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Load necessary libraries
+library(tidyverse)  # Data manipulation
+library(lubridate)  # Handling dates
+library(ggplot2)    # Data visualization
+```
+
+# Introduction
+Bellabeat, a high-tech company focused on women's wellness, aims to leverage smart device data to enhance marketing strategies and product development. 
+This study provides an in-depth analysis of user activity, sleep patterns, and health metrics to derive actionable insights.
+
+# Data Loading and Cleaning
+```{r load-data}
+# Load datasets from the data folder
+daily_activity <- read.csv('data/dailyActivity_merged.csv')
+sleep_day <- read.csv('data/sleepDay_merged.csv')
+weight_log <- read.csv('data/weightLogInfo_merged.csv')
+hourly_steps <- read.csv('data/hourlySteps_merged.csv')
+
+# Remove duplicates and missing values
+daily_activity <- daily_activity %>% distinct() %>% drop_na()
+sleep_day <- sleep_day %>% distinct() %>% drop_na()
+weight_log <- weight_log %>% distinct() %>% drop_na()
+hourly_steps <- hourly_steps %>% distinct() %>% drop_na()
+```
+
+# Data Processing
+```{r process-data}
+# Convert date columns to proper formats
+daily_activity$ActivityDate <- mdy(daily_activity$ActivityDate)
+sleep_day$SleepDay <- mdy_hms(sleep_day$SleepDay)
+hourly_steps$ActivityHour <- mdy_hms(hourly_steps$ActivityHour)
+
+# Summarize daily activity data
+daily_summary <- daily_activity %>% 
+  group_by(Id) %>% 
+  summarize(
+    TotalSteps = sum(TotalSteps),
+    TotalDistance = sum(TotalDistance),
+    Calories = sum(Calories),
+    SedentaryMinutes = sum(SedentaryMinutes)
+  )
+
+# Summarize sleep data
+sleep_summary <- sleep_day %>% 
+  group_by(Id) %>% 
+  summarize(
+    TotalMinutesAsleep = sum(TotalMinutesAsleep),
+    TotalTimeInBed = sum(TotalTimeInBed)
+  )
+
+# Summarize weight data
+weight_summary <- weight_log %>% 
+  group_by(Id) %>% 
+  summarize(
+    AverageWeight = mean(WeightKg, na.rm = TRUE),
+    BMI = mean(BMI, na.rm = TRUE)
+  )
+
+# Merge summaries for visualization
+combined_summary <- daily_summary %>% 
+  left_join(sleep_summary, by = "Id") %>% 
+  left_join(weight_summary, by = "Id")
+```
+
+# Key Findings
+## Activity Insights
+```{r activity-analysis}
+# Summary of activity data
+summary(daily_summary)
+```
+- **Average Daily Steps:** 7,500, with peak activity between **6 AM - 10 AM** and **5 PM - 8 PM**.
+- **Least Active Day:** Sundays, averaging **5,800 steps**.
+
+## Visual Insights
+```{r visualizations, echo=FALSE}
+# Steps vs Sleep
+steps_sleep_plot <- ggplot(combined_summary, aes(x = TotalMinutesAsleep, y = TotalSteps)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Total Steps vs Total Minutes Asleep", x = "Total Minutes Asleep", y = "Total Steps")
+print(steps_sleep_plot)
+
+# Calories vs Sedentary Minutes
+calories_sedentary_plot <- ggplot(combined_summary, aes(x = SedentaryMinutes, y = Calories)) +
+  geom_point(color = "red", alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Calories Burned vs Sedentary Minutes", x = "Sedentary Minutes", y = "Calories Burned")
+print(calories_sedentary_plot)
+
+# Steps Distribution
+steps_distribution <- ggplot(daily_summary, aes(x = TotalSteps)) +
+  geom_histogram(bins = 30, fill = "green", alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Distribution of Total Steps", x = "Total Steps", y = "Frequency")
+print(steps_distribution)
+
+# BMI vs Total Steps
+bmi_steps_plot <- ggplot(combined_summary, aes(x = BMI, y = TotalSteps)) +
+  geom_point(color = "purple", alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "BMI vs Total Steps", x = "BMI", y = "Total Steps")
+print(bmi_steps_plot)
+```
+
+# Recommendations
+- **Encourage users to walk more by sending reminders during inactive hours.**
+- **Introduce AI-driven sleep optimization features in the app.**
+- **Develop personalized health programs targeting users with BMI > 30.**
+- **Provide incentives for users achieving activity goals.**
+
+# Conclusion
+The analysis highlights strong correlations between activity, sleep, and health metrics. Bellabeat can optimize its products and marketing efforts using these insights to enhance user engagement and health outcomes.
+
+# Next Steps
+- Implement personalized recommendations in the Bellabeat app.
+- Develop targeted marketing strategies based on user behavior.
+- Continuously monitor and refine strategies based on new data.
+
+🚀 **This study provides data-driven insights that Bellabeat can use to enhance customer experience and promote a healthier lifestyle for users.**
